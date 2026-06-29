@@ -1,0 +1,143 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Environment Variables
+.env
+.env.local
+.env.*.local
+.env.development.local
+.env.production.local
+.env.test.local
+
+# Keep templates
+!.env.example
+!.env.development
+!.env.production
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.hypothesis/
+.coverage.*
+coverage.xml
+*.cover
+.cache
+nosetests.xml
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Database
+*.db
+*.sqlite3
+*.sqlite
+postgres_data/
+db_data/
+
+# Redis
+redis_data/
+dump.rdb
+
+# Logs
+*.log
+logs/
+app.log
+
+# Docker
+docker-compose.override.yml
+
+# Uploads
+uploads/
+*.pdf
+*.docx
+*.doc
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# MyPy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre
+.pyre/
+
+# pytype
+.pytype/
+
+# Cython
+cython_debug/
+
+# Documentation builds (ignore only build artifacts)
+docs/_build/
+
+# ✅ Documentation files ARE tracked (keep these in Git):
+# - README.md
+# - ROADMAP.md
+# - SETUP.md
+# - QUICK_START.md
+# - TIMELINE.md
+# - All files in docs/ (except _build/)
+# - .env.example, .env.development, .env.production
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Backup files
+*.bak
+*.backup
+
+# Temporary files
+*.tmp
+*.temp
+tmp/
+temp/
+
+# API Keys (extra safety)
+*_key.txt
+*_secret.txt
+credentials.json
+token.json
+
+# Alembic
+# alembic/versions/*  # Uncomment to ignore migrations

@@ -1,0 +1,128 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: hermes-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      POSTGRES_DB: ${POSTGRES_DB:-hermes_ai}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - hermes-network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: hermes-redis
+    command: redis-server --appendonly yes
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - hermes-network
+
+  # Main Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: hermes-app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - .:/app
+      - ./uploads:/app/uploads
+    ports:
+      - "${PORT:-8000}:8000"
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - hermes-network
+    restart: unless-stopped
+
+
+  # Celery Worker
+  celery_worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: hermes-celery-worker
+    command: celery -A app.workers.celery_app worker --loglevel=info
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    depends_on:
+      - redis
+      - postgres
+    networks:
+      - hermes-network
+    restart: unless-stopped
+
+  # Celery Beat (Scheduler)
+  celery_beat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: hermes-celery-beat
+    command: celery -A app.workers.celery_app beat --loglevel=info
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    depends_on:
+      - redis
+    networks:
+      - hermes-network
+    restart: unless-stopped
+
+  # Flower (Celery Monitoring)
+  flower:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: hermes-flower
+    command: celery -A app.workers.celery_app flower --port=5555
+    ports:
+      - "5555:5555"
+    env_file:
+      - .env
+    depends_on:
+      - redis
+      - celery_worker
+    networks:
+      - hermes-network
+    restart: unless-stopped
+
+# Volumes
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+# Networks
+networks:
+  hermes-network:
+    driver: bridge
