@@ -141,3 +141,21 @@ token.json
 
 # Alembic
 # alembic/versions/*  # Uncomment to ignore migrations
+
+# Internal/Work-in-Progress Documentation
+# Personal notes and summaries - NOT for GitHub
+ENV_UPGRADE_SUMMARY.md
+ROADMAP_50LPA_UPGRADE.md
+docs/ROADMAP_UPGRADES.md
+FEATURE_SUMMARY.md
+QUICK_START.md
+TIMELINE.md
+docs/DAY*_SUMMARY.md
+docs/PHASE_WISE_IMPLEMENTATION.md
+docs/ENVIRONMENT.md
+docs/FEATURES.md
+
+# Personal Notes (if you create any)
+notes.md
+TODO.md
+NOTES.txt
