@@ -1,7 +1,6 @@
 """
 Hermes AI OS - Main FastAPI Application
-
-Personal AI Assistant with multi-agent system, RAG, memory, and more.
+Personal AI Assistant with RAG, Memory, Multi-Agent, Deep Thinking, and Guardrails.
 """
 
 import uuid
@@ -11,199 +10,168 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.core.config import get_settings
+from app.core.config import settings
 from app.core.logger import get_logger
-from app.db.session import (
-    check_database_health,
-    get_pool_stats,
-)
+from app.core.exceptions import register_exception_handlers
+from app.db.session import check_database_health, get_pool_stats, init_db
 
-settings = get_settings()
+# ── API Routers ────────────────────────────────────────────────────────────────
+from app.api.auth          import router as auth_router
+from app.api.users         import router as users_router
+from app.api.goals         import router as goals_router
+from app.api.tasks         import router as tasks_router
+from app.api.chat          import router as chat_router
+from app.api.documents     import router as documents_router
+from app.api.memories      import router as memories_router
+from app.api.voice         import router as voice_router
+from app.api.schedules     import router as schedules_router
+from app.api.routines      import router as routines_router
+from app.api.notifications import router as notifications_router
+from app.api.analytics     import router as analytics_router
+
+settings = settings
 logger = get_logger(__name__)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """
-    Lifespan context manager for startup and shutdown events.
-    Handles resource initialization and cleanup.
-    """
-    # ===== STARTUP =====
-    logger.info(
-        "Starting Hermes AI OS",
-        extra={
-            "version": settings.APP_VERSION,
-            "environment": settings.ENVIRONMENT,
-        }
-    )
-    
-    logger.info("Hermes AI OS started successfully")
-    
-    yield  # Server running
-    
-    # ===== SHUTDOWN =====
-    logger.info("Shutting down Hermes AI OS...")
-    logger.info("Hermes AI OS shutdown complete")
+    """Startup and shutdown lifecycle manager."""
+    # ── STARTUP ────────────────────────────────────────────────────────────────
+    logger.info("🚀 Starting Hermes AI OS", extra={
+        "version": settings.APP_VERSION,
+        "environment": settings.ENVIRONMENT,
+    })
+
+    # Initialize database tables
+    try:
+        init_db()
+        logger.info("✅ Database initialized")
+    except Exception as e:
+        logger.warning(f"⚠️ Database init skipped: {e}")
+
+    # Verify LLM providers
+    try:
+        from app.clients.llm_client import get_llm_client
+        llm = get_llm_client()
+        logger.info(f"✅ LLM providers: {llm.status}")
+    except Exception as e:
+        logger.warning(f"⚠️ LLM client init: {e}")
+
+    logger.info("✅ Hermes AI OS started successfully")
+    yield
+
+    # ── SHUTDOWN ───────────────────────────────────────────────────────────────
+    logger.info("🛑 Shutting down Hermes AI OS...")
+    logger.info("✅ Shutdown complete")
 
 
-# Create FastAPI application
+# ── App Instance ───────────────────────────────────────────────────────────────
 app = FastAPI(
     title=settings.APP_NAME,
-    description="Personal AI Assistant - Your intelligent companion for goals, tasks, and productivity",
+    description="Personal AI Assistant — Goals · Tasks · RAG · Memory · Voice · Agents",
     version=settings.APP_VERSION,
     docs_url="/docs" if settings.DEBUG else None,
     redoc_url="/redoc" if settings.DEBUG else None,
     lifespan=lifespan,
 )
 
+# ── Middleware ─────────────────────────────────────────────────────────────────
 
-# ===== MIDDLEWARE =====
-
-# 1. CORS Middleware
+# 1. CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.ALLOWED_ORIGINS,
-    allow_credentials=settings.ALLOW_CREDENTIALS,
-    allow_methods=settings.ALLOW_METHODS.split(","),
-    allow_headers=settings.ALLOW_HEADERS.split(","),
+    allow_origins=["*"] if settings.CORS_ORIGINS == "*" else settings.CORS_ORIGINS.split(","),
+    allow_credentials=settings.CORS_ALLOW_CREDENTIALS,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
+# 2. Exception handlers
+register_exception_handlers(app)
 
-# 2. Request Logging Middleware
+# 3. Request ID + logging middleware
 @app.middleware("http")
-async def log_requests(request: Request, call_next):
-    """
-    Log every request with timing information.
-    """
-    # Generate request ID
-    request_id = str(uuid.uuid4())
-    start_time = time.time()
-    
-    # Store request ID in state for later use
+async def request_middleware(request: Request, call_next):
+    request_id = str(uuid.uuid4())[:8]
+    start = time.time()
     request.state.request_id = request_id
-    
-    # Process request
+
     response = await call_next(request)
-    
-    # Calculate duration
-    duration_ms = (time.time() - start_time) * 1000
-    
-    # Add request ID to response headers
+
+    duration_ms = round((time.time() - start) * 1000)
     response.headers["X-Request-ID"] = request_id
-    
+    response.headers["X-Response-Time"] = f"{duration_ms}ms"
+
+    logger.info(f"{request.method} {request.url.path} → {response.status_code} ({duration_ms}ms) [{request_id}]")
     return response
 
 
-# ===== HEALTH CHECK ENDPOINTS =====
+# ── Routers ────────────────────────────────────────────────────────────────────
+v1 = settings.API_V1_PREFIX
+
+app.include_router(auth_router,          prefix=f"{v1}/auth",          tags=["🔐 Auth"])
+app.include_router(users_router,         prefix=f"{v1}/users",         tags=["👤 Users"])
+app.include_router(goals_router,         prefix=f"{v1}/goals",         tags=["🎯 Goals"])
+app.include_router(tasks_router,         prefix=f"{v1}/tasks",         tags=["✅ Tasks"])
+app.include_router(chat_router,          prefix=f"{v1}/chat",          tags=["💬 Chat"])
+app.include_router(documents_router,     prefix=f"{v1}/documents",     tags=["📚 Documents"])
+app.include_router(memories_router,      prefix=f"{v1}/memories",      tags=["🧠 Memory"])
+app.include_router(voice_router,         prefix=f"{v1}/voice",         tags=["🎤 Voice"])
+app.include_router(schedules_router,     prefix=f"{v1}/schedules",     tags=["🗓️ Schedules"])
+app.include_router(routines_router,      prefix=f"{v1}/routines",      tags=["🔁 Routines"])
+app.include_router(notifications_router, prefix=f"{v1}/notifications", tags=["🔔 Notifications"])
+app.include_router(analytics_router,     prefix=f"{v1}/analytics",     tags=["📊 Analytics"])
+
+
+# ── Health Endpoints ───────────────────────────────────────────────────────────
 
 @app.get("/", tags=["Health"])
 async def root():
-    """
-    Root endpoint - Welcome message.
-    """
     return {
         "success": True,
         "message": f"Welcome to {settings.APP_NAME}!",
         "version": settings.APP_VERSION,
-        "docs": "/docs" if settings.DEBUG else "Documentation not available in production",
+        "docs": "/docs",
+        "phases_complete": {
+            "infrastructure": True,
+            "auth": True,
+            "goals_tasks": True,
+            "rag": False,
+            "chat_memory": False,
+            "agents": False,
+        }
     }
 
 
 @app.get("/health", tags=["Health"])
 async def health_check():
-    """
-    Basic health check - returns server status.
-    """
-    return {
-        "success": True,
-        "status": "healthy",
-        "service": settings.APP_NAME,
-        "version": settings.APP_VERSION,
-        "environment": settings.ENVIRONMENT,
-    }
+    return {"status": "healthy", "service": settings.APP_NAME, "version": settings.APP_VERSION}
 
 
 @app.get("/health/db", tags=["Health"])
 async def database_health():
-    """
-    Database health check - returns database status and pool stats.
-    """
-    db_healthy = check_database_health()
-    pool_stats = get_pool_stats()
-    
-    return {
-        "success": True,
-        "database": "healthy" if db_healthy else "unhealthy",
-        "pool": pool_stats,
-    }
+    db_ok = check_database_health()
+    return {"database": "healthy" if db_ok else "unhealthy", "pool": get_pool_stats()}
 
 
 @app.get("/health/ready", tags=["Health"])
 async def readiness_check():
-    """
-    Readiness check - for Kubernetes/Docker health checks.
-    Returns 200 if ready, 503 if not.
-    """
-    db_healthy = check_database_health()
-    
-    if not db_healthy:
-        return JSONResponse(
-            status_code=503,
-            content={
-                "success": False,
-                "status": "not_ready",
-                "reason": "Database not available",
-            }
-        )
-    
-    return {
-        "success": True,
-        "status": "ready",
-    }
+    if not check_database_health():
+        return JSONResponse(status_code=503, content={"status": "not_ready", "reason": "DB unavailable"})
+    return {"status": "ready"}
 
 
-# ===== INFO ENDPOINTS =====
+@app.get("/health/providers", tags=["Health"])
+async def provider_health():
+    """Check which LLM providers are configured and available"""
+    try:
+        from app.clients.llm_client import get_llm_client
+        llm = get_llm_client()
+        return {"status": "ok", "providers": llm.status}
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
 
-@app.get("/info", tags=["Info"])
-async def app_info():
-    """
-    Application information and configuration summary.
-    """
-    return {
-        "success": True,
-        "app": {
-            "name": settings.APP_NAME,
-            "version": settings.APP_VERSION,
-            "environment": settings.ENVIRONMENT,
-        },
-        "features": {
-            "multi_llm": True,
-            "rag": settings.ENABLE_RAG,
-            "memory": settings.ENABLE_MEMORY,
-            "voice": settings.ENABLE_VOICE,
-        },
-        "links": {
-            "docs": "/docs",
-            "redoc": "/redoc",
-            "health": "/health",
-        }
-    }
-
-
-# ===== STARTUP MESSAGE =====
 
 if __name__ == "__main__":
     import uvicorn
-    
-    logger.info(f"Starting {settings.APP_NAME} v{settings.APP_VERSION}")
-    logger.info(f"Environment: {settings.ENVIRONMENT}")
-    logger.info(f"Debug mode: {settings.DEBUG}")
-    logger.info(f"Server will be available at: http://localhost:8000")
-    
-    uvicorn.run(
-        "app.main:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=settings.DEBUG,
-        log_level="info",
-    )
+    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=settings.DEBUG)

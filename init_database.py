@@ -12,21 +12,13 @@ from app.db.session import engine
 from app.models.user import User
 from app.models.goal import Goal
 from app.models.task import Task
-from app.models.memory import Memory
-from app.models.document import Document
 from app.models.conversation import Conversation
 from app.models.message import Message
-from app.models.habit import Habit
-from app.models.routine import Routine
-from app.models.schedule import Schedule
-from app.models.notification import Notification
-from app.models.agent_run import AgentRun
-from app.models.review import Review
 from sqlalchemy import text
 
 
 def init_database():
-    """Initialize the database with all tables"""
+    """Initialize the database with essential tables"""
     print("🚀 Initializing Hermes AI OS database...")
 
     # Create tables

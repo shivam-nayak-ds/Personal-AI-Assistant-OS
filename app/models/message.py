@@ -21,7 +21,7 @@ class Message(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     role = Column(Enum(MessageRole), default=MessageRole.USER)
     content = Column(Text, nullable=False)
-    metadata = Column(String)  # JSON string for additional metadata
+    metadata_json = Column(String)  # JSON string for additional metadata
     created_at = Column(DateTime, default=datetime.utcnow)
 
     # Relationships

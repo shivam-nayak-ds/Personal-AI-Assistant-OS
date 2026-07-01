@@ -1,4 +1,4 @@
-from typing import Generator
+from typing import Generator, Optional
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
@@ -6,9 +6,12 @@ from redis import Redis
 
 from app.core.config import settings
 from app.core.logger import auth_logger, db_logger
-from app.core.security import get_current_active_user, get_current_user
+from app.core.security import get_current_active_user, get_current_user, get_current_admin_user  # ✅ Fixed
 from app.db.session import get_db as get_db_session
 from app.models.user import User
+
+# ✅ oauth2_scheme defined here
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_PREFIX}/auth/token")
 
 
 # Redis connection
@@ -33,15 +36,13 @@ def get_redis() -> Redis:
 
 # Database session dependency
 def get_db() -> Generator[Session, None, None]:
-    """Get database session"""
+    """Get database session — direct SessionLocal, no double wrapping"""
+    from app.db.session import SessionLocal
+    db = SessionLocal()
     try:
-        db = get_db_session()
         yield db
     finally:
-        try:
-            db.close()
-        except Exception as e:
-            db_logger.error(f"Database session close error: {str(e)}")
+        db.close()
 
 
 # Current user dependency (cached for multiple calls in same request)
@@ -62,14 +63,14 @@ async def get_current_active_user_cached(
 
 # Current admin dependency
 async def get_current_admin_user_cached(
-    current_user: User = Depends(get_current_admin_user)
+    current_user: User = Depends(get_current_admin_user)  # ✅ Fixed
 ) -> User:
     """Get current admin user (returns same instance for same request)"""
     return current_user
 
 
 # Security utilities
-def require_token(token: str = Depends(oauth2_scheme)):
+def require_token(token: str = Depends(oauth2_scheme)):  # ✅ Fixed
     """Require Bearer token for authentication"""
     if not token:
         raise HTTPException(
@@ -81,7 +82,7 @@ def require_token(token: str = Depends(oauth2_scheme)):
 
 # Rate limiting dependency (basic implementation)
 def check_rate_limit(
-    user_id: Optional[str] = None,
+    user_id: Optional[str] = None,  # ✅ Fixed
     redis: Redis = Depends(get_redis)
 ):
     """Basic rate limiting check"""

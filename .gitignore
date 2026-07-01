@@ -6,9 +6,19 @@ __pycache__/
 .Python
 env/
 venv/
+.venv/
 ENV/
 env.bak/
 venv.bak/
+
+# Node / Frontend
+node_modules/
+.next/
+frontend/.next/
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+frontend/.env.local
 build/
 develop-eggs/
 dist/

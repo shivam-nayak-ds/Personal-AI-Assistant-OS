@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker, Session
 from app.core.config import settings
@@ -60,6 +60,7 @@ async def get_async_db():
 
 def init_db():
     """Initialize the database with all tables"""
+    from app.db.base import Base  # ✅ Base import fix
     from app.models.user import User
     from app.models.goal import Goal
     from app.models.task import Task
@@ -87,7 +88,7 @@ def check_database_health() -> bool:
     """Returns True if DB is healthy"""
     try:
         db = SessionLocal()
-        db.execute("SELECT 1")
+        db.execute(text("SELECT 1"))  # ✅ SQLAlchemy 2.x fix
         return True
     except Exception:
         return False
@@ -102,7 +103,7 @@ async def check_async_database_health() -> bool:
     """Returns True if async DB is healthy"""
     try:
         async with AsyncSessionLocal() as session:
-            await session.execute("SELECT 1")
+            await session.execute(text("SELECT 1"))  # ✅ SQLAlchemy 2.x fix
         return True
     except Exception:
         return False

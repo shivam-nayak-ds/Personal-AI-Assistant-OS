@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 from typing import Optional
 from datetime import datetime, timedelta
-import redis
+from redis import Redis  # ✅ Fixed
 
 from app.core.config import settings
 from app.core.dependencies import get_db, get_redis
@@ -15,14 +15,14 @@ from app.core.security import (
     get_current_active_user
 )
 from app.models.user import User
-from app.schemas.user import UserLogin, UserResponse, Token, TokenData
+from app.schemas.user import UserLogin, UserCreate, UserResponse, Token, TokenData
 
 
 router = APIRouter()
 
 
 @router.post(
-    "/auth/token",
+    "/token",
     response_model=Token,
     summary="Login user and get access token"
 )
@@ -30,7 +30,7 @@ async def login_for_access_token(
     request: Request,
     form_data: UserLogin,
     db: Session = Depends(get_db),
-    redis: redis = Depends(get_redis)
+    redis: Redis = Depends(get_redis)
 ):
     """
     Authenticate user and return JWT tokens
@@ -91,14 +91,14 @@ async def login_for_access_token(
 
 
 @router.post(
-    "/auth/refresh",
+    "/refresh",
     response_model=Token,
     summary="Refresh access token"
 )
 async def refresh_token(
     refresh_token: str,
     db: Session = Depends(get_db),
-    redis: redis = Depends(get_redis)
+    redis: Redis = Depends(get_redis)
 ):
     """
     Refresh expired access token using refresh token
@@ -162,14 +162,14 @@ async def refresh_token(
 
 
 @router.post(
-    "/auth/logout",
+    "/logout",
     status_code=status.HTTP_200_OK,
     summary="Logout user"
 )
 async def logout(
     request: Request,
     current_user: User = Depends(get_current_active_user),
-    redis: redis = Depends(get_redis)
+    redis: Redis = Depends(get_redis)
 ):
     """
     Logout user (invalidate refresh token)
@@ -190,15 +190,15 @@ async def logout(
 
 
 @router.post(
-    "/auth/register",
+    "/register",
     response_model=UserResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Register new user"
 )
 async def register(
-    user_data: UserLogin,
+    user_data: UserCreate,
     db: Session = Depends(get_db),
-    redis: redis = Depends(get_redis)
+    redis: Redis = Depends(get_redis)
 ):
     """
     Register a new user account
@@ -211,7 +211,7 @@ async def register(
     """
     # Check if user already exists
     existing_user = db.query(User).filter(
-        (User.email == user_data.username) |
+        (User.email == user_data.email) |
         (User.username == user_data.username)
     ).first()
 
@@ -262,7 +262,7 @@ async def register(
 
 
 @router.get(
-    "/auth/me",
+    "/me",
     response_model=UserResponse,
     summary="Get current user profile"
 )
@@ -274,7 +274,7 @@ async def get_current_user_profile(
 
 
 @router.post(
-    "/auth/change-password",
+    "/change-password",
     status_code=status.HTTP_200_OK,
     summary="Change user password"
 )
@@ -289,4 +289,4 @@ async def change_password(
     """
     # For now, just return success as password change requires password field in request
     auth_logger.info(f"✅ Password change requested for: {current_user.username}")
-    return {"message": "Password change endpoint - implement password field in request"
+    return {"message": "Password change endpoint - implement password field in request"}  # ✅ Fixed

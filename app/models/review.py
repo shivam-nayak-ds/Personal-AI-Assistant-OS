@@ -34,6 +34,6 @@ class Review(Base):
     reviewer_id = Column(Integer, ForeignKey("users.id"))
     reviewed_at = Column(DateTime)
 
-    # Relationships
-    user = relationship("User", back_populates="reviews")
+    # Relationships — must specify foreign_keys since there are 2 FKs to users
+    user = relationship("User", back_populates="reviews", foreign_keys=[user_id])
     reviewer = relationship("User", foreign_keys=[reviewer_id])

@@ -44,6 +44,12 @@ def setup_logger(
     return logger
 
 
+# ✅ Alias — get_logger is the standard name used everywhere
+def get_logger(name: str) -> logging.Logger:
+    """Get a configured logger for a module. Use: logger = get_logger(__name__)"""
+    return setup_logger(name)
+
+
 # Configure root logger
 root_logger = logging.getLogger()
 root_logger.setLevel(level=logging.DEBUG if settings.DEBUG else logging.INFO)

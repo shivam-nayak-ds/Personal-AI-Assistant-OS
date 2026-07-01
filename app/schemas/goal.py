@@ -51,6 +51,13 @@ class GoalWithTasks(GoalResponse):
     """Schema for goal with tasks"""
     tasks: List["TaskResponse"] = []
 
+    model_config = {"from_attributes": True}
+
+
+# ✅ Resolve forward reference after TaskResponse is defined below
+def rebuild_schemas():
+    GoalWithTasks.model_rebuild()
+
 
 class TaskPriority(str, Enum):
     """Task priority enumeration"""
@@ -70,7 +77,7 @@ class TaskBase(BaseModel):
 class TaskCreate(TaskBase):
     """Schema for task creation"""
     goal_id: Optional[PositiveInt] = None
-    user_id: PositiveInt
+    user_id: Optional[PositiveInt] = None  # ✅ Injected from JWT, not required in body
     priority: Optional[TaskPriority] = TaskPriority.MEDIUM
 
 
@@ -101,3 +108,7 @@ class TaskWithDetails(TaskResponse):
     """Schema for task with additional details"""
     goal_title: Optional[str] = None
     goal_status: Optional[str] = None
+
+
+# ✅ Resolve forward references now that all classes are defined
+GoalWithTasks.model_rebuild()

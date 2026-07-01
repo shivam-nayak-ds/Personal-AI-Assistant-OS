@@ -7,6 +7,7 @@ fastapi==0.109.0
 uvicorn[standard]==0.27.0
 python-multipart==0.0.6
 websockets==12.0
+sse-starlette==1.8.2
 
 # Database
 sqlalchemy==2.0.25
@@ -22,19 +23,37 @@ hiredis==2.3.2
 celery==5.3.6
 flower==2.0.1
 
-# AI/ML - OpenAI
+# ─────────────────────────────────────
+# AI/ML - LLM Providers
+# ─────────────────────────────────────
+
+# OpenAI (GPT-4, Whisper, TTS)
 openai==1.10.0
 tiktoken==0.5.2
 
-# AI/ML - Alternative LLMs (Optional)
+# Groq (Ultra-fast Llama 3.1, Whisper STT)
+groq==0.9.0
+
+# Anthropic Claude (best reasoning/critique)
 anthropic==0.8.1
 
-# Vector Database
-pinecone-client==3.0.0
-# Alternative: weaviate-client==3.26.0
-# Alternative: qdrant-client==1.7.0
+# Google Gemini (embeddings + fallback LLM)
+google-generativeai==0.7.2
 
+# ─────────────────────────────────────
+# Vector Database
+# ─────────────────────────────────────
+pinecone==4.1.0
+
+# ─────────────────────────────────────
+# RAG Pipeline
+# ─────────────────────────────────────
+rank-bm25==0.2.2          # BM25 keyword search
+chardet==5.2.0             # document encoding detection
+
+# ─────────────────────────────────────
 # Data Validation & Serialization
+# ─────────────────────────────────────
 pydantic==2.5.3
 pydantic-settings==2.1.0
 
@@ -47,14 +66,16 @@ bcrypt==4.1.2
 python-dotenv==1.0.0
 
 # HTTP Client
-httpx==0.26.0
+httpx==0.27.0
 requests==2.31.0
 
 # Date & Time
 python-dateutil==2.8.2
 pytz==2024.1
 
-# Document Processing
+# ─────────────────────────────────────
+# Document Processing (RAG ingestion)
+# ─────────────────────────────────────
 PyPDF2==3.0.1
 python-docx==1.1.0
 markdown==3.5.2
@@ -62,39 +83,63 @@ markdown==3.5.2
 # Email
 email-validator==2.1.0
 
-# Google Calendar Integration
+# ─────────────────────────────────────
+# Integrations
+# ─────────────────────────────────────
+# Google Calendar
 google-auth==2.27.0
 google-auth-oauthlib==1.2.0
 google-auth-httplib2==0.2.0
 google-api-python-client==2.116.0
 
-# Notion Integration
+# Notion
 notion-client==2.2.1
 
-# GitHub Integration
+# GitHub
 PyGithub==2.1.1
 
-# Speech (Voice Interface)
-# openai-whisper==20231117  # Use OpenAI API instead
-# pydub==0.25.1  # Audio processing if needed
-
-# Monitoring & Logging
+# ─────────────────────────────────────
+# Monitoring & Observability
+# ─────────────────────────────────────
+# Metrics
 prometheus-client==0.19.0
+
+# Error tracking
 sentry-sdk[fastapi]==1.40.0
 
+# Distributed Tracing (OpenTelemetry)
+opentelemetry-api==1.24.0
+opentelemetry-sdk==1.24.0
+opentelemetry-instrumentation-fastapi==0.45b0
+opentelemetry-instrumentation-sqlalchemy==0.45b0
+opentelemetry-instrumentation-redis==0.45b0
+
+# ─────────────────────────────────────
+# Guardrails
+# ─────────────────────────────────────
+better-profanity==0.7.0    # toxicity filter
+langdetect==1.0.9          # language detection
+
+# ─────────────────────────────────────
 # Utils
+# ─────────────────────────────────────
 python-slugify==8.0.2
 shortuuid==1.0.11
+tenacity==8.2.3            # retry logic
 
+# ─────────────────────────────────────
 # Testing
+# ─────────────────────────────────────
 pytest==7.4.3
 pytest-asyncio==0.23.3
 pytest-cov==4.1.0
 pytest-mock==3.12.0
 faker==22.6.0
-httpx==0.26.0  # For testing async HTTP
+httpx==0.27.0              # async HTTP testing
 
+# ─────────────────────────────────────
 # Code Quality
+# ─────────────────────────────────────
 black==24.1.1
 flake8==7.0.0
 isort==5.13.2

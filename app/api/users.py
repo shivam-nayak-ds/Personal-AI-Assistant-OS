@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from datetime import datetime
+from redis import Redis  # ✅ Added missing import
 
 from app.core.config import settings
 from app.core.dependencies import get_db, get_redis, check_rate_limit
@@ -15,7 +16,7 @@ router = APIRouter()
 
 
 @router.post(
-    "/users",
+    "/",
     response_model=UserResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Create a new user"
@@ -86,7 +87,7 @@ async def create_user(
 
 
 @router.get(
-    "/users",
+    "/",
     response_model=List[UserResponse],
     summary="List all users"
 )
@@ -108,7 +109,7 @@ async def list_users(
 
 
 @router.get(
-    "/users/{user_id}",
+    "/{user_id}",
     response_model=UserResponse,
     summary="Get user by ID"
 )
@@ -134,7 +135,7 @@ async def get_user(
 
 
 @router.put(
-    "/users/{user_id}",
+    "/{user_id}",
     response_model=UserResponse,
     summary="Update user"
 )
@@ -198,7 +199,7 @@ async def update_user(
 
 
 @router.delete(
-    "/users/{user_id}",
+    "/{user_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Delete user"
 )
@@ -231,7 +232,7 @@ async def delete_user(
 
 
 @router.get(
-    "/users/{user_id}/goals",
+    "/{user_id}/goals",
     response_model=list,
     summary="Get user's goals"
 )
